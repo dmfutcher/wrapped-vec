@@ -3,5 +3,6 @@ name = "wrapped-vec"
 version = "0.1.0"
 authors = ["David Futcher <david@futcher.io>"]
 license = "MIT OR Apache-2.0"
+description = "Macro for generating wrapped Vec types and associated boilerplate"
 
 [dependencies]

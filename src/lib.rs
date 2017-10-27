@@ -75,8 +75,10 @@ macro_rules! _wrapped_vec {
     )
 }
 
+/*
 pub use example::{ExampleType, ExampleCollection};
 mod example {
     pub struct ExampleType;
     wrapped_vec!(ExampleCollection(Vec<ExampleType>));
 }
+*/
