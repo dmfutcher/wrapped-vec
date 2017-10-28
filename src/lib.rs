@@ -3,12 +3,6 @@
 #[macro_export]
 macro_rules! wrapped_vec {
     ($wrapping_type:ident(Vec<$item_type:ty>)) => (
-        _wrapped_vec!($wrapping_type, $item_type);
-    )
-}
-
-macro_rules! _wrapped_vec {
-    ($wrapping_type:ident, $item_type:ty) => (
         pub struct $wrapping_type(Vec<$item_type>);
 
         impl ::std::iter::FromIterator<$item_type> for $wrapping_type {
