@@ -1,3 +1,9 @@
+Version 0.1.2
+=============
+
+    * Remove unnecessary outer wrapper macro, fixes issue where wrapped_vec!
+      macro would fail when imported from extern crate
+
 Version 0.1.1
 =============
 
