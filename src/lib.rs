@@ -1,5 +1,3 @@
-#![feature(concat_idents)]
-
 #[macro_export]
 macro_rules! wrapped_vec {
     ($wrapping_type:ident(Vec<$item_type:ty>)) => (
