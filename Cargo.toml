@@ -9,4 +9,9 @@ readme = "README.md"
 keywords = ["vec", "vector", "collection", "iterator", "codegen"]
 categories = ["rust-patterns", "development-tools", "data-structures"]
 
+[lib]
+proc-macro = true
+
 [dependencies]
+syn = "0.11"
+quote = "0.3"

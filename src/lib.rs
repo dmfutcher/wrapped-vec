@@ -1,76 +1,47 @@
-#[macro_export]
-macro_rules! wrapped_vec {
-    ($wrapping_type:ident(Vec<$item_type:ty>)) => (
-        pub struct $wrapping_type(Vec<$item_type>);
+extern crate proc_macro;
+extern crate syn;
+#[macro_use]
+extern crate quote;
 
-        impl ::std::iter::FromIterator<$item_type> for $wrapping_type {
-            fn from_iter<I: IntoIterator<Item=$item_type>>(iter: I) -> Self {
-                let mut inner = vec![];
-                inner.extend(iter);
-                $wrapping_type(inner)
-            }
-        }
+use proc_macro::TokenStream;
 
-        impl From<Vec<$item_type>> for $wrapping_type {
-
-            fn from(ids: Vec<$item_type>) -> $wrapping_type {
-                let mut new = $wrapping_type::new();
-                new.extend(ids);
-                new
-            }
-
-        }
-
-        impl IntoIterator for $wrapping_type {
-            type Item = $item_type;
-            type IntoIter = ::std::vec::IntoIter<$item_type>;
-
-            fn into_iter(self) -> Self::IntoIter {
-                self.0.into_iter()
-            }
-        }
-
-        impl<'a> IntoIterator for &'a $wrapping_type {
-            type Item = &'a $item_type;
-            type IntoIter = ::std::slice::Iter<'a, $item_type>;
-
-            fn into_iter(self) -> Self::IntoIter {
-                self.0.iter()
-            }
-        }
-
-        impl Extend<$item_type> for $wrapping_type {
-            fn extend<T: IntoIterator<Item=$item_type>>(&mut self, iter: T) {
-                self.0.extend(iter);
-            }
-        }
-
-        impl $wrapping_type {
-
-            pub fn new() -> $wrapping_type {
-                $wrapping_type(vec![])
-            }
-
-            pub fn is_empty(&self) -> bool {
-                self.0.is_empty()
-            }
-
-            pub fn len(&self) -> usize {
-                self.0.len()
-            }
-
-            pub fn iter<'a>(&'a self) -> ::std::slice::Iter<'a, $item_type> {
-                self.into_iter()
-            }
-
-        }
+#[proc_macro_derive(WrappedVec, 
+    attributes(
+        CollectionName,
+        CollectionDoc
     )
+)]
+pub fn wrapped_vec(input: TokenStream) -> TokenStream {
+    let s = input.to_string();
+    let ast = syn::parse_derive_input(&s).unwrap();
+
+    let gen = impl_wrapped_vec(&ast);
+    gen.parse().unwrap()
 }
 
-/*
-pub use example::{ExampleType, ExampleCollection};
-mod example {
-    pub struct ExampleType;
-    wrapped_vec!(ExampleCollection(Vec<ExampleType>));
+fn impl_wrapped_vec(ast: &syn::DeriveInput) -> quote::Tokens {
+    let item_ident = &ast.ident;
+
+    let collection_name = attr_string_val(ast, "CollectionName").expect("Need [CollectionName=\"...\"]");
+    let collection_ident = syn::Ident::from(collection_name);
+
+    let collection_doc = attr_string_val(ast, "CollectionDoc").unwrap_or(format!("A collection of {}s", item_ident));
+
+    quote! {
+        #[doc=#collection_doc]
+        pub struct #collection_ident(Vec<#item_ident>);
+    }
 }
-*/
+
+fn attr_string_val(ast: &syn::DeriveInput, attr_name: &'static str) -> Option<String> {
+    if let Some(ref a) = ast.attrs.iter().find(|a| a.name() == attr_name) {
+        if let syn::MetaItem::NameValue(_, syn::Lit::Str(ref val, _)) = a.value {
+            return Some(val.clone())
+        }
+        else {
+            return None
+        }
+    } else {
+        return None
+    }
+}
