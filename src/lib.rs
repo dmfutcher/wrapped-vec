@@ -48,10 +48,10 @@ impl Docs {
 
     fn new(ast: &DeriveInput, idents: &Idents) -> Docs {
         let wrapper = doc_attr!(ast, "CollectionDoc", format!("A collection of {}s", idents.item));
-        let new = doc_attr!(ast, "NewDoc", format!("Creates a new, empty {}", idents.collection));
-        let is_empty = doc_attr!(ast, "IsEmptyDoc", format!("Returns true if the {} contains no {}s", idents.collection, idents.item));
-        let len = doc_attr!(ast, "LenDoc", format!("Returns the number of {}s in the {}", idents.item, idents.collection));
-        let iter = doc_attr!(ast, "IterDoc", format!("Returns an iterator over the {}", idents.collection));
+        let new = doc_attr!(ast, "CollectionNewDoc", format!("Creates a new, empty {}", idents.collection));
+        let is_empty = doc_attr!(ast, "CollectionIsEmptyDoc", format!("Returns true if the {} contains no {}s", idents.collection, idents.item));
+        let len = doc_attr!(ast, "CollectionLenDoc", format!("Returns the number of {}s in the {}", idents.item, idents.collection));
+        let iter = doc_attr!(ast, "CollectionIterDoc", format!("Returns an iterator over the {}", idents.collection));
 
         Docs {
             wrapper: wrapper,
@@ -72,10 +72,10 @@ impl Docs {
     attributes(
         CollectionName,
         CollectionDoc,
-        NewDoc,
-        IsEmptyDoc,
-        LenDoc,
-        IterDoc
+        CollectionNewDoc,
+        CollectionIsEmptyDoc,
+        CollectionLenDoc,
+        CollectionIterDoc
     )
 )]
 pub fn wrapped_vec(input: TokenStream) -> TokenStream {
