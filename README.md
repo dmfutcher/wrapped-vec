@@ -1,5 +1,6 @@
 wrapped-vec
 ===========
+[![Latest Version](https://img.shields.io/crates/v/wrapped-vec.svg)](https://crates.io/crates/wrapped-vec)
 [![Build Status](https://travis-ci.org/bobbo/wrapped-vec.svg?branch=master)](https://travis-ci.org/bobbo/wrapped-vec)
 
 *wrapped-vec* is a Rust crate for auto-generating type definitions and boilerplate code for wrapping 
@@ -12,7 +13,11 @@ wrapper over `Vec` for any type. For example:
 pub struct ExampleType { ... };
 ```
 
-will generate `pub struct ExampleCollection(Vec<ExampleType>)`.
+will generate 
+
+``` rust
+pub struct ExampleCollection(Vec<ExampleType>)
+```
 
 A large number of useful trait impls are auto-generated, including `Iter`, `IntoIter` & `Expand`, plus a small
 number of useful `Vec`-style methods like `len()`, `iter()` & `is_empty()`.
