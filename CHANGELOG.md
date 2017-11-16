@@ -1,3 +1,12 @@
+Version 0.2.0
+=============
+
+    * Complete rewrite as a proc-macro
+    * Documentation for generated collection, plus `new`, `iter`, `is_empty` &
+     `len` methods on the collection:
+        - Attributes for generating custom documentation, if needed
+        - Auto-generated default documentation if attrs not given
+
 Version 0.1.2
 =============
 
