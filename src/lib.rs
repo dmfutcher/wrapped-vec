@@ -10,22 +10,38 @@ use syn::{Ident, DeriveInput};
 
 struct Idents {
     item: Ident,
-    collection: Ident
+    collection: Ident,
+    derives: Option<Vec<Ident>>
 }
 
 impl Idents {
 
     fn new(ast: &DeriveInput) -> Result<Idents, String> {
         let collection_name = attr_string_val(ast, "CollectionName").expect("Need [CollectionName=\"...\"]");
+        let derives = Idents::parse_derives(ast);
 
         Ok(Idents{
             item: ast.ident.clone(),
-            collection: Ident::from(collection_name)
+            collection: Ident::from(collection_name),
+            derives: derives
         })
     }
 
-    fn as_parts(&self) -> (&Ident, &Ident) {
-        (&self.item, &self.collection)
+    fn parse_derives(ast: &DeriveInput) -> Option<Vec<Ident>> {
+        match attr_string_val(ast, "CollectionDerives") {
+            Some(derives_str) => {
+                if derives_str.is_empty() {
+                    return None
+                }
+
+                Some(derives_str.split(",").map(Ident::from).collect())
+            },
+            None => None
+        }
+    }
+
+    fn as_parts(&self) -> (&Ident, &Ident, &Option<Vec<Ident>>) {
+        (&self.item, &self.collection, &self.derives)
     }
 
 }
@@ -71,6 +87,7 @@ impl Docs {
 #[proc_macro_derive(WrappedVec, 
     attributes(
         CollectionName,
+        CollectionDerives,
         CollectionDoc,
         CollectionNewDoc,
         CollectionIsEmptyDoc,
@@ -100,11 +117,21 @@ fn impl_wrapped_vec(ast: &DeriveInput) -> Result<quote::Tokens, String> {
 }
 
 fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> quote::Tokens {
-    let (item_ident, collection_ident) = idents.as_parts();
+    let (item_ident, collection_ident, collection_derive) = idents.as_parts();
     let (collection_doc, new_doc, is_empty_doc, len_doc, iter_doc) = docs.as_parts();
+
+    let derives_toks = match collection_derive.clone() {
+        Some(derives) => {
+            quote!{ #[derive(#(#derives),*)] }
+        },
+        None => {
+            quote!{}
+        }
+    };
 
     quote! {
         #[doc=#collection_doc]
+        #derives_toks
         pub struct #collection_ident(Vec<#item_ident>);
 
         impl ::std::iter::FromIterator<#item_ident> for #collection_ident {
