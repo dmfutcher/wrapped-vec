@@ -90,6 +90,27 @@ Documentation attributes available are:
 Documentation for trait methods are auto-populated from the parent trait documentation and not
 currently overridable.
 
+### Deriving Traits for Generated Collections
+
+The `CollectionDerives` attribute can be used to specify traits which will be derived on the
+generated collection type. Traits to be derived are specified as a comma-separated list in a
+string. Omitting the `CollectionDerives` attribute, or passing an empty string, causes no trait
+derivations to be generated.
+
+``` rust
+#[derive(Clone, Debug, WrappedVec)]
+#[CollectionName="TaskBatch"]
+#[CollectionDerives="Clone, Debug"]
+pub struct Task { ... };
+```
+
+will generate
+
+``` rust
+#[derive(Clone, Debug)]
+pub struct TaskBatch(Vec<Task>);
+```
+
 ## License
 
 Licensed under either of

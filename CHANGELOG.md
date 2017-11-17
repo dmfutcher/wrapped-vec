@@ -1,3 +1,9 @@
+Version 0.2.1
+=============
+
+    * Add ability to specify derived traits on generated collections using
+      `CollectionDerives` attribute (Issue #3)
+
 Version 0.2.0
 =============
 
