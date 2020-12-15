@@ -1,4 +1,4 @@
-#![recursion_limit="128"]
+#![recursion_limit = "128"]
 
 extern crate proc_macro;
 extern crate syn;
@@ -6,24 +6,24 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
-use syn::{Ident, DeriveInput};
+use syn::{DeriveInput, Ident};
 
 struct Idents {
     item: Ident,
     collection: Ident,
-    derives: Option<Vec<Ident>>
+    derives: Option<Vec<Ident>>,
 }
 
 impl Idents {
-
     fn new(ast: &DeriveInput) -> Result<Idents, String> {
-        let collection_name = attr_string_val(ast, "CollectionName").expect("Need [CollectionName=\"...\"]");
+        let collection_name =
+            attr_string_val(ast, "CollectionName").expect("Need [CollectionName=\"...\"]");
         let derives = Idents::parse_derives(ast);
 
-        Ok(Idents{
+        Ok(Idents {
             item: ast.ident.clone(),
             collection: Ident::from(collection_name),
-            derives: derives
+            derives: derives,
         })
     }
 
@@ -31,19 +31,18 @@ impl Idents {
         match attr_string_val(ast, "CollectionDerives") {
             Some(derives_str) => {
                 if derives_str.is_empty() {
-                    return None
+                    return None;
                 }
 
                 Some(derives_str.split(",").map(Ident::from).collect())
-            },
-            None => None
+            }
+            None => None,
         }
     }
 
     fn as_parts(&self) -> (&Ident, &Ident, &Option<Vec<Ident>>) {
         (&self.item, &self.collection, &self.derives)
     }
-
 }
 
 struct Docs {
@@ -51,40 +50,71 @@ struct Docs {
     new: String,
     is_empty: String,
     len: String,
-    iter: String
+    iter: String,
 }
 
 macro_rules! doc_attr {
-    ($ast:ident, $attr:expr, $default:expr) => (
+    ($ast:ident, $attr:expr, $default:expr) => {
         attr_string_val($ast, $attr).unwrap_or($default);
-    )
+    };
 }
 
 impl Docs {
-
     fn new(ast: &DeriveInput, idents: &Idents) -> Docs {
-        let wrapper = doc_attr!(ast, "CollectionDoc", format!("A collection of {}s", idents.item));
-        let new = doc_attr!(ast, "CollectionNewDoc", format!("Creates a new, empty {}", idents.collection));
-        let is_empty = doc_attr!(ast, "CollectionIsEmptyDoc", format!("Returns true if the {} contains no {}s", idents.collection, idents.item));
-        let len = doc_attr!(ast, "CollectionLenDoc", format!("Returns the number of {}s in the {}", idents.item, idents.collection));
-        let iter = doc_attr!(ast, "CollectionIterDoc", format!("Returns an iterator over the {}", idents.collection));
+        let wrapper = doc_attr!(
+            ast,
+            "CollectionDoc",
+            format!("A collection of {}s", idents.item)
+        );
+        let new = doc_attr!(
+            ast,
+            "CollectionNewDoc",
+            format!("Creates a new, empty {}", idents.collection)
+        );
+        let is_empty = doc_attr!(
+            ast,
+            "CollectionIsEmptyDoc",
+            format!(
+                "Returns true if the {} contains no {}s",
+                idents.collection, idents.item
+            )
+        );
+        let len = doc_attr!(
+            ast,
+            "CollectionLenDoc",
+            format!(
+                "Returns the number of {}s in the {}",
+                idents.item, idents.collection
+            )
+        );
+        let iter = doc_attr!(
+            ast,
+            "CollectionIterDoc",
+            format!("Returns an iterator over the {}", idents.collection)
+        );
 
         Docs {
             wrapper: wrapper,
             new: new,
             is_empty: is_empty,
             len: len,
-            iter: iter
+            iter: iter,
         }
     }
 
     fn as_parts(&self) -> (&String, &String, &String, &String, &String) {
-        (&self.wrapper, &self.new, &self.is_empty, &self.len, &self.iter)
+        (
+            &self.wrapper,
+            &self.new,
+            &self.is_empty,
+            &self.len,
+            &self.iter,
+        )
     }
-
 }
 
-#[proc_macro_derive(WrappedVec, 
+#[proc_macro_derive(
+    WrappedVec,
     attributes(
         CollectionName,
         CollectionDerives,
@@ -100,9 +130,7 @@ pub fn wrapped_vec(input: TokenStream) -> TokenStream {
     let ast = syn::parse_derive_input(&s).unwrap();
 
     match impl_wrapped_vec(&ast) {
-        Ok(gen) => {
-            gen.parse().unwrap()
-        },
+        Ok(gen) => gen.parse().unwrap(),
         Err(err) => {
             panic!(err);
         }
@@ -122,10 +150,10 @@ fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> quote::Tokens {
 
     let derives_toks = match collection_derive.clone() {
         Some(derives) => {
-            quote!{ #[derive(#(#derives),*)] }
-        },
+            quote! { #[derive(#(#derives),*)] }
+        }
         None => {
-            quote!{}
+            quote! {}
         }
     };
 
@@ -205,12 +233,11 @@ fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> quote::Tokens {
 fn attr_string_val(ast: &syn::DeriveInput, attr_name: &'static str) -> Option<String> {
     if let Some(ref a) = ast.attrs.iter().find(|a| a.name() == attr_name) {
         if let syn::MetaItem::NameValue(_, syn::Lit::Str(ref val, _)) = a.value {
-            return Some(val.clone())
-        }
-        else {
-            return None
+            return Some(val.clone());
+        } else {
+            return None;
         }
     } else {
-        return None
+        return None;
     }
 }
