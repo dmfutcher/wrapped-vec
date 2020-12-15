@@ -14,5 +14,6 @@ categories = ["rust-patterns", "development-tools", "data-structures"]
 proc-macro = true
 
 [dependencies]
-syn = "0.11"
-quote = "0.3"
+proc-macro2 = "^1"
+quote = "^1"
+syn ="^1"
