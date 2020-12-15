@@ -2,6 +2,7 @@
 name = "wrapped-vec"
 version = "0.2.1"
 authors = ["David Futcher <david@futcher.io>"]
+edition = "2018"
 license = "MIT OR Apache-2.0"
 description = "Macro for generating wrapped Vec types and associated boilerplate"
 repository = "https://github.com/bobbo/wrapped-vec"
