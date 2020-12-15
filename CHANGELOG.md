@@ -1,3 +1,9 @@
+Version 0.3.0
+=============
+
+    * Updated to 2018 edition of Rust
+    * Updated dependencies 
+
 Version 0.2.1
 =============
 
