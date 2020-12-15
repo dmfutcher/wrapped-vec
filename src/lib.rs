@@ -128,7 +128,6 @@ impl Docs {
     )
 )]
 pub fn wrapped_vec(token_stream: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    // let args = parse_macro_input!(input as AttributeArgs);
     let input = parse_macro_input!(token_stream as DeriveInput);
     impl_wrapped_vec(&input).unwrap().into()
 }
