@@ -56,25 +56,25 @@ struct Docs {
 }
 
 macro_rules! doc_attr {
-    ($ast:ident, $attr:expr, $default:expr) => {
-        attr_string_val($ast, $attr).unwrap_or($default);
+    ($input:ident, $attr:expr, $default:expr) => {
+        attr_string_val($input, $attr).unwrap_or($default);
     };
 }
 
 impl Docs {
-    fn new(ast: &DeriveInput, idents: &Idents) -> Docs {
+    fn new(input: &DeriveInput, idents: &Idents) -> Docs {
         let wrapper = doc_attr!(
-            ast,
+            input,
             "CollectionDoc",
             format!("A collection of {}s", idents.item)
         );
         let new = doc_attr!(
-            ast,
+            input,
             "CollectionNewDoc",
             format!("Creates a new, empty {}", idents.collection)
         );
         let is_empty = doc_attr!(
-            ast,
+            input,
             "CollectionIsEmptyDoc",
             format!(
                 "Returns true if the {} contains no {}s",
@@ -82,7 +82,7 @@ impl Docs {
             )
         );
         let len = doc_attr!(
-            ast,
+            input,
             "CollectionLenDoc",
             format!(
                 "Returns the number of {}s in the {}",
@@ -90,7 +90,7 @@ impl Docs {
             )
         );
         let iter = doc_attr!(
-            ast,
+            input,
             "CollectionIterDoc",
             format!("Returns an iterator over the {}", idents.collection)
         );
@@ -223,8 +223,8 @@ fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> TokenStream {
     }
 }
 
-fn attr_string_val(ast: &DeriveInput, attr_name: &'static str) -> Option<String> {
-    ast.attrs.iter().find_map(|input| {
+fn attr_string_val(input: &DeriveInput, attr_name: &'static str) -> Option<String> {
+    input.attrs.iter().find_map(|input| {
         if let Ok(attribute) = input.parse_meta() {
             if let syn::Meta::NameValue(name_value) = attribute {
                 if name_value.path.is_ident(attr_name) {
