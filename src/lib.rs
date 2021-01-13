@@ -1,49 +1,50 @@
-#![recursion_limit="128"]
-
 extern crate proc_macro;
-extern crate syn;
-#[macro_use]
-extern crate quote;
 
-use proc_macro::TokenStream;
-use syn::{Ident, DeriveInput};
+use quote::quote;
+
+use proc_macro2::{Span, TokenStream};
+use syn::{parse_macro_input, DeriveInput, Ident};
 
 struct Idents {
     item: Ident,
     collection: Ident,
-    derives: Option<Vec<Ident>>
+    derives: Option<Vec<Ident>>,
 }
 
 impl Idents {
+    fn new(input: &DeriveInput) -> Result<Idents, String> {
+        let collection_name =
+            attr_string_val(input, "CollectionName").expect("Need [CollectionName=\"...\"]");
+        let derives = Idents::parse_derives(input);
 
-    fn new(ast: &DeriveInput) -> Result<Idents, String> {
-        let collection_name = attr_string_val(ast, "CollectionName").expect("Need [CollectionName=\"...\"]");
-        let derives = Idents::parse_derives(ast);
-
-        Ok(Idents{
-            item: ast.ident.clone(),
-            collection: Ident::from(collection_name),
-            derives: derives
+        Ok(Idents {
+            item: input.ident.clone(),
+            collection: Ident::new(&collection_name, Span::call_site()),
+            derives: derives,
         })
     }
 
-    fn parse_derives(ast: &DeriveInput) -> Option<Vec<Ident>> {
-        match attr_string_val(ast, "CollectionDerives") {
+    fn parse_derives(input: &DeriveInput) -> Option<Vec<Ident>> {
+        match attr_string_val(input, "CollectionDerives") {
             Some(derives_str) => {
                 if derives_str.is_empty() {
-                    return None
+                    return None;
                 }
 
-                Some(derives_str.split(",").map(Ident::from).collect())
-            },
-            None => None
+                Some(
+                    derives_str
+                        .split(",")
+                        .map(|s| Ident::new(s.trim(), Span::call_site()))
+                        .collect(),
+                )
+            }
+            None => None,
         }
     }
 
     fn as_parts(&self) -> (&Ident, &Ident, &Option<Vec<Ident>>) {
         (&self.item, &self.collection, &self.derives)
     }
-
 }
 
 struct Docs {
@@ -51,40 +52,71 @@ struct Docs {
     new: String,
     is_empty: String,
     len: String,
-    iter: String
+    iter: String,
 }
 
 macro_rules! doc_attr {
-    ($ast:ident, $attr:expr, $default:expr) => (
-        attr_string_val($ast, $attr).unwrap_or($default);
-    )
+    ($input:ident, $attr:expr, $default:expr) => {
+        attr_string_val($input, $attr).unwrap_or($default);
+    };
 }
 
 impl Docs {
-
-    fn new(ast: &DeriveInput, idents: &Idents) -> Docs {
-        let wrapper = doc_attr!(ast, "CollectionDoc", format!("A collection of {}s", idents.item));
-        let new = doc_attr!(ast, "CollectionNewDoc", format!("Creates a new, empty {}", idents.collection));
-        let is_empty = doc_attr!(ast, "CollectionIsEmptyDoc", format!("Returns true if the {} contains no {}s", idents.collection, idents.item));
-        let len = doc_attr!(ast, "CollectionLenDoc", format!("Returns the number of {}s in the {}", idents.item, idents.collection));
-        let iter = doc_attr!(ast, "CollectionIterDoc", format!("Returns an iterator over the {}", idents.collection));
+    fn new(input: &DeriveInput, idents: &Idents) -> Docs {
+        let wrapper = doc_attr!(
+            input,
+            "CollectionDoc",
+            format!("A collection of {}s", idents.item)
+        );
+        let new = doc_attr!(
+            input,
+            "CollectionNewDoc",
+            format!("Creates a new, empty {}", idents.collection)
+        );
+        let is_empty = doc_attr!(
+            input,
+            "CollectionIsEmptyDoc",
+            format!(
+                "Returns true if the {} contains no {}s",
+                idents.collection, idents.item
+            )
+        );
+        let len = doc_attr!(
+            input,
+            "CollectionLenDoc",
+            format!(
+                "Returns the number of {}s in the {}",
+                idents.item, idents.collection
+            )
+        );
+        let iter = doc_attr!(
+            input,
+            "CollectionIterDoc",
+            format!("Returns an iterator over the {}", idents.collection)
+        );
 
         Docs {
             wrapper: wrapper,
             new: new,
             is_empty: is_empty,
             len: len,
-            iter: iter
+            iter: iter,
         }
     }
 
     fn as_parts(&self) -> (&String, &String, &String, &String, &String) {
-        (&self.wrapper, &self.new, &self.is_empty, &self.len, &self.iter)
+        (
+            &self.wrapper,
+            &self.new,
+            &self.is_empty,
+            &self.len,
+            &self.iter,
+        )
     }
-
 }
 
-#[proc_macro_derive(WrappedVec, 
+#[proc_macro_derive(
+    WrappedVec,
     attributes(
         CollectionName,
         CollectionDerives,
@@ -95,37 +127,27 @@ impl Docs {
         CollectionIterDoc
     )
 )]
-pub fn wrapped_vec(input: TokenStream) -> TokenStream {
-    let s = input.to_string();
-    let ast = syn::parse_derive_input(&s).unwrap();
-
-    match impl_wrapped_vec(&ast) {
-        Ok(gen) => {
-            gen.parse().unwrap()
-        },
-        Err(err) => {
-            panic!(err);
-        }
-    }
+pub fn wrapped_vec(token_stream: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(token_stream as DeriveInput);
+    impl_wrapped_vec(&input).unwrap().into()
 }
 
-fn impl_wrapped_vec(ast: &DeriveInput) -> Result<quote::Tokens, String> {
-    let idents = Idents::new(ast)?;
-    let docs = Docs::new(ast, &idents);
-
+fn impl_wrapped_vec(input: &DeriveInput) -> Result<TokenStream, String> {
+    let idents = Idents::new(input)?;
+    let docs = Docs::new(input, &idents);
     Ok(generate_wrapped_vec(&idents, &docs))
 }
 
-fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> quote::Tokens {
+fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> TokenStream {
     let (item_ident, collection_ident, collection_derive) = idents.as_parts();
     let (collection_doc, new_doc, is_empty_doc, len_doc, iter_doc) = docs.as_parts();
 
     let derives_toks = match collection_derive.clone() {
         Some(derives) => {
-            quote!{ #[derive(#(#derives),*)] }
-        },
+            quote! { #[derive(#(#derives),*)] }
+        }
         None => {
-            quote!{}
+            quote! {}
         }
     };
 
@@ -143,13 +165,11 @@ fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> quote::Tokens {
         }
 
         impl From<Vec<#item_ident>> for #collection_ident {
-
             fn from(ids: Vec<#item_ident>) -> #collection_ident {
                 let mut new = #collection_ident::new();
                 new.extend(ids);
                 new
             }
-
         }
 
         impl IntoIterator for #collection_ident {
@@ -202,15 +222,17 @@ fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> quote::Tokens {
     }
 }
 
-fn attr_string_val(ast: &syn::DeriveInput, attr_name: &'static str) -> Option<String> {
-    if let Some(ref a) = ast.attrs.iter().find(|a| a.name() == attr_name) {
-        if let syn::MetaItem::NameValue(_, syn::Lit::Str(ref val, _)) = a.value {
-            return Some(val.clone())
+fn attr_string_val(input: &DeriveInput, attr_name: &'static str) -> Option<String> {
+    input.attrs.iter().find_map(|input| {
+        if let Ok(attribute) = input.parse_meta() {
+            if let syn::Meta::NameValue(name_value) = attribute {
+                if name_value.path.is_ident(attr_name) {
+                    if let syn::Lit::Str(s) = &name_value.lit {
+                        return Some(s.value());
+                    }
+                }
+            }
         }
-        else {
-            return None
-        }
-    } else {
-        return None
-    }
+        None
+    })
 }
