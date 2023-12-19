@@ -57,7 +57,7 @@ struct Docs {
 
 macro_rules! doc_attr {
     ($input:ident, $attr:expr, $default:expr) => {
-        attr_string_val($input, $attr).unwrap_or($default);
+        attr_string_val($input, $attr).unwrap_or($default)
     };
 }
 
