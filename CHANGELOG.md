@@ -1,3 +1,9 @@
+Version 0.4.0
+=============
+
+    * Updated to 2021 edition of Rust
+    * Updated `syn` dependency 
+
 Version 0.3.0
 =============
 

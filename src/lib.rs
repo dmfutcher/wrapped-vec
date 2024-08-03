@@ -57,7 +57,7 @@ struct Docs {
 
 macro_rules! doc_attr {
     ($input:ident, $attr:expr, $default:expr) => {
-        attr_string_val($input, $attr).unwrap_or($default);
+        attr_string_val($input, $attr).unwrap_or($default)
     };
 }
 
@@ -224,10 +224,10 @@ fn generate_wrapped_vec(idents: &Idents, docs: &Docs) -> TokenStream {
 
 fn attr_string_val(input: &DeriveInput, attr_name: &'static str) -> Option<String> {
     input.attrs.iter().find_map(|input| {
-        if let Ok(attribute) = input.parse_meta() {
-            if let syn::Meta::NameValue(name_value) = attribute {
-                if name_value.path.is_ident(attr_name) {
-                    if let syn::Lit::Str(s) = &name_value.lit {
+        if let syn::Meta::NameValue(name_value) = &input.meta {
+            if name_value.path.is_ident(attr_name) {
+                if let syn::Expr::Lit(expr_lit) = &name_value.value {
+                    if let syn::Lit::Str(s) = &expr_lit.lit {
                         return Some(s.value());
                     }
                 }

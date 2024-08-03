@@ -69,7 +69,7 @@ fn implements_derives() {
     #[derive(Clone, Debug, WrappedVec)]
     #[CollectionName = "Fruits"]
     #[CollectionDerives = "Clone, Debug"]
-    pub struct Fruit {};
+    pub struct Fruit {}
 
     let _debug = format!("{:?}", Fruit {});
     let _clone = (Fruit {}).clone();
